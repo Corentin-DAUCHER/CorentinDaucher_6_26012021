@@ -1,6 +1,7 @@
 const multer = require('multer');
 const multerConfig = require('../middleware/multer-config');
 const Sauce = require('../models/sauces');
+const sanitized = require('sanitized');
 
 exports.getAllSauces = (req,res, next) => {
     Sauce.find()
@@ -21,12 +22,17 @@ exports.newSauce = (req, res, next) => {
     
     const newSauce = JSON.parse(req.body.sauce);
 
-    console.log('userId: ' + newSauce.userId);
-    console.log('name: ' + newSauce.name);
-    console.log('manufacturer: ' + newSauce.manufacturer);
-    console.log('description: ' + newSauce.description);
-    console.log('mainPepper: ' + newSauce.mainPepper);
-    console.log('heat: ' + newSauce.heat);
+    sanitized(newSauce.userId);
+    sanitized(newSauce.name);
+    sanitized(newSauce.manufacturer);
+    sanitized(newSauce.description);
+    sanitized(newSauce.mainPepper);
+    sanitized(newSauce.imageUrl);
+    sanitized(newSauce.heat);
+    sanitized(newSauce.likes);
+    sanitized(newSauce.dislikes);
+    sanitized(newSauce.usersLiked);
+    sanitized(newSauce.usersDisliked);
 
     const sauce = new Sauce({
         userId: newSauce.userId,
@@ -58,6 +64,8 @@ exports.modifySauce = (req, res, next) => {
         ...JSON.parse(req.body.sauce),
         imageUrl: req.protocol + '://' + req.get('host') + '/images/' + req.file.filename
     } : {...req.body};
+
+    sanitized(modifiedSauce);
 
     Sauce.updateOne({_id: req.params.id}, {...modifiedSauce, _id: req.params.id})
     .then(() => {
