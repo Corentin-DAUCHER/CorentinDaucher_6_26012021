@@ -1,0 +1,76 @@
+const User = require('../models/users');
+
+const jwt = require('jsonwebtoken');
+
+const bcrypt = require('bcrypt');
+
+exports.signup = (req, res, next) => {
+
+    const user = new User();
+
+    bcrypt.hash(req.body.email, 8)
+    .then(hash => {
+        user.email = hash;
+    })
+    .catch(error => {
+        console.log('Erreur lors du hash !' + error);
+        res.status(400).json({message: 'Erreur lors du hash !', error});
+    })
+
+    bcrypt.hash(req.body.password, 8)
+    .then(hash => {
+        user.password = hash;
+    })
+    .catch(error => {
+        console.log('Erreur lors du hash !' + error);
+        res.status(400).json({message: 'Erreur lors du hash !', error});
+    })
+
+    user.userId = user._id;
+
+    user.save()
+    .then(() => res.status(201).json({message: 'User created !'}))
+    .catch(error => {
+        res.status(400).json({error: 'Echec de la création du user' + error})
+        console.log('Failed to create user ' + error);
+    })
+}
+
+exports.login = (req, res, next) => {
+
+    User.find()
+    .then(users => {
+        for(i in users){
+            const email = users[i].email;
+            bcrypt.compare(req.body.email, email)
+            .then(valid => {
+                if(!valid){
+                    console.log('Searching emails !');
+                }else if(valid){
+
+                    User.findOne({email: email})
+                    .then(user => {
+                        if(!user){
+                            console.log('User not found !');
+                            return res.status(401).json({error: 'User not found !'});
+                        }
+                        bcrypt.compare(req.body.password, user.password)
+                        .then(valid => {
+                            if(!valid){
+                                console.log('Wrong password !');
+                                return res.status(401).json({error: 'Wrong password !'})
+                            }
+                            res.status(200).json({
+                                userId: user.userId,
+                                token: jwt.sign({userId: user._id}, 'RANDOM_TOKEN_SECRET', {expiresIn: '24h'})
+                            })
+                        })
+                        .catch(error => res.status(400).json({message: 'Wrong password !', error}))
+                    })
+                    .catch(error => res.status(400).json({message: 'User not found !', error}))
+
+                }
+            })
+        }
+    })
+}
