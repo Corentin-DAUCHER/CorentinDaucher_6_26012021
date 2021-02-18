@@ -15,7 +15,7 @@ exports.getAllSauces = (req,res, next) => {
 exports.getOneSauce = (req, res, next) => {
     Sauce.findById({_id: req.params.id})
     .then(sauce => res.status(200).json(sauce))
-    .catch(error => res.status(400).json(error))
+    .catch(error => res.status(400).json({message: 'Sauce not found !'}));
 };
 
 exports.newSauce = (req, res, next) => {
@@ -93,7 +93,13 @@ exports.setUserPreference = (req, res, next) => {
 
     const userId = req.body.userId;
 
+    sanitized(userId);
+
     const like = JSON.parse(req.body.like);
+
+    if(like == isNaN){
+        return res.status(400).json({message: 'let like is not a number !'});
+    }
 
     const sauceId = req.params.id;
 

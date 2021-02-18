@@ -4,11 +4,38 @@ const jwt = require('jsonwebtoken');
 
 const bcrypt = require('bcrypt');
 
+const sanitized = require('sanitized');
+
 exports.signup = (req, res, next) => {
+
+    const email = req.body.email;
+
+    const password = req.body.password;
+
+    sanitized(email);
+    sanitized(password);
+
+    User.find()
+    .then(users => {
+        for(i in users){
+            const emailInDb = users[i].email;
+
+            bcrypt.compare(email, emailInDb)
+            .then(valid => {
+                if(valid){
+                    return res.status(400).json({message: 'Email already in use !'});
+                }
+            })
+        }
+    })
+    .catch(error => {
+        console.log(error);
+        res.status(400).json({message: 'Users collection is empty !'});
+    })
 
     const user = new User();
 
-    bcrypt.hash(req.body.email, 8)
+    bcrypt.hash(email, 8)
     .then(hash => {
         user.email = hash;
     })
@@ -17,7 +44,7 @@ exports.signup = (req, res, next) => {
         res.status(400).json({message: 'Erreur lors du hash !', error});
     })
 
-    bcrypt.hash(req.body.password, 8)
+    bcrypt.hash(password, 8)
     .then(hash => {
         user.password = hash;
     })
@@ -41,10 +68,16 @@ exports.login = (req, res, next) => {
     User.find()
     .then(users => {
         for(i in users){
+
             const email = users[i].email;
             bcrypt.compare(req.body.email, email)
             .then(valid => {
                 if(!valid){
+
+                    if(i == users.length - 1){
+                        return res.status(400).json({erreur: 'User not found !'});
+                    }
+
                     console.log('Searching emails !');
                 }else if(valid){
 

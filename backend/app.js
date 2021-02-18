@@ -1,3 +1,10 @@
+/*import {userData} from 'userPassword';
+
+const user = userData()
+
+const name = user.name;
+const password = user.password; */
+
 const express = require('express');
 
 const bodyParser = require('body-parser');
@@ -18,6 +25,10 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50
 });
+
+//const URIS = 'mongodb+srv://' + name + ':' + password + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
+
+//console.log(URIS);
 
 mongoose.connect('mongodb+srv://guest:aze123@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false })
     .then(() => {
