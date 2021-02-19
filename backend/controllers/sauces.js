@@ -1,6 +1,5 @@
-const multer = require('multer');
-const multerConfig = require('../middleware/multer-config');
 const Sauce = require('../models/sauces');
+const fs = require('fs');
 const sanitized = require('sanitized');
 
 exports.getAllSauces = (req,res, next) => {
@@ -81,12 +80,24 @@ exports.modifySauce = (req, res, next) => {
 
 exports.deleteSauce = (req, res, next) => {
 
-    Sauce.deleteOne({_id: req.params.id})
-    .then(() => {
-        console.log('Sauce deleted !');
-        res.status(200).json({message: 'Sauce deleted !'});
+    Sauce.findOne({_id: req.params.id})
+    .then(sauce => {
+        const filename = sauce.imageUrl.split('/images/')[1];
+        fs.unlink('images/' + filename);
+        Sauce.deleteOne({_id: req.params.id})
+        .then(() => {
+            console.log('Sauce deleted !')
+            res.status(200).json({message: 'Sauce deleted !'});
+        })
+        .catch(error => {
+            console.log('Failed to delete sauce !' + error);
+            res.status(400).json({error: 'Failed to delete sauce !', error});
+        })
     })
-    .catch(error => res.status(400).json(error));
+    .catch(error => {
+        console.log('Sauce not found !' + error);
+        res.status(400).json({error: 'Sauce not found', error});
+    })
 };
 
 exports.setUserPreference = (req, res, next) => {

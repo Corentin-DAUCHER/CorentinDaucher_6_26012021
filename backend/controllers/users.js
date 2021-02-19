@@ -65,12 +65,25 @@ exports.signup = (req, res, next) => {
 
 exports.login = (req, res, next) => {
 
+    const email = req.body.email;
+
+    const password = req.body.password;
+
+    sanitized(email);
+    sanitized(password);
+
     User.find()
     .then(users => {
+
+        if(users.length == 0){
+            console.log('No users found !');
+            return res.status(400).json({message: 'No users found !'});
+        }
+
         for(i in users){
 
-            const email = users[i].email;
-            bcrypt.compare(req.body.email, email)
+            const emailInDb = users[i].email;
+            bcrypt.compare(email, emailInDb)
             .then(valid => {
                 if(!valid){
 
@@ -81,13 +94,13 @@ exports.login = (req, res, next) => {
                     console.log('Searching emails !');
                 }else if(valid){
 
-                    User.findOne({email: email})
+                    User.findOne({email: emailInDb})
                     .then(user => {
                         if(!user){
                             console.log('User not found !');
                             return res.status(401).json({error: 'User not found !'});
                         }
-                        bcrypt.compare(req.body.password, user.password)
+                        bcrypt.compare(password, user.password)
                         .then(valid => {
                             if(!valid){
                                 console.log('Wrong password !');
@@ -105,5 +118,9 @@ exports.login = (req, res, next) => {
                 }
             })
         }
+    })
+    .catch(error => {
+        console.log('No users found !' + error);
+        res.status(400).json({message: 'No users found !', error})
     })
 }
