@@ -1,9 +1,9 @@
-/*import {userData} from 'userPassword';
+const userPassword = require('./userPassword');
 
-const user = userData()
+const user = userPassword;
 
 const name = user.name;
-const password = user.password; */
+const password = user.password;
 
 const express = require('express');
 
@@ -26,11 +26,9 @@ const limiter = rateLimit({
   max: 50
 });
 
-//const URIS = 'mongodb+srv://' + name + ':' + password + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
+const URIS = 'mongodb+srv://' + name + ':' + password + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
 
-//console.log(URIS);
-
-mongoose.connect('mongodb+srv://guest:aze123@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false })
+mongoose.connect(URIS, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false })
     .then(() => {
       console.log('Successfully connected to MongoDB Atlas!');
     })
