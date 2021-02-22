@@ -6,9 +6,9 @@ const bcrypt = require('bcrypt');
 
 const sanitized = require('sanitized');
 
-exports.signup = (req, res, next) => {
+//SIGNUP
 
-    let j = 0;
+exports.signup = (req, res, next) => {
 
     const email = req.body.email.toLowerCase();
 
@@ -17,104 +17,11 @@ exports.signup = (req, res, next) => {
     sanitized(email);
     sanitized(password);
 
-    User.find()
-        .then(users => {
+    signup(res, email, password);
 
-            if (users.length == 0) {
-
-                console.log('Creating New User !');
-
-                const user = new User();
-
-                bcrypt.hash(email, 8)
-                    .then(hash => {
-                        user.email = hash;
-                    })
-                    .catch(error => {
-                        console.log('Erreur lors du hash !' + error);
-                        res.status(400).json({ message: 'Erreur lors du hash !', error });
-                    })
-
-                bcrypt.hash(password, 8)
-                    .then(hash => {
-                        user.password = hash;
-                    })
-                    .catch(error => {
-                        console.log('Erreur lors du hash !' + error);
-                        res.status(400).json({ message: 'Erreur lors du hash !', error });
-                    })
-
-                user.userId = user._id;
-
-                user.save()
-                    .then(() => res.status(201).json({ message: 'User created !' }))
-                    .catch(error => {
-                        res.status(400).json({ error: 'Echec de la création du user' + error })
-                        console.log('Failed to create user ' + error);
-                    })
-
-            } else {
-
-                for (i in users) {
-
-                    const emailInDb = users[i].email;
-
-                    bcrypt.compare(email, emailInDb)
-                        .then(valid => {
-                            if (valid) {
-                                j++;
-                            }
-                        })
-                }
-
-                if (j != 1) {
-
-                    console.log('Creating New User !');
-
-                    const user = new User();
-
-                    bcrypt.hash(email, 8)
-                        .then(hash => {
-                            user.email = hash;
-                        })
-                        .catch(error => {
-                            console.log('Erreur lors du hash !' + error);
-                            res.status(400).json({ message: 'Erreur lors du hash !', error });
-                        })
-
-                    bcrypt.hash(password, 8)
-                        .then(hash => {
-                            user.password = hash;
-                        })
-                        .catch(error => {
-                            console.log('Erreur lors du hash !' + error);
-                            res.status(400).json({ message: 'Erreur lors du hash !', error });
-                        })
-
-                    user.userId = user._id;
-
-                    user.save()
-                        .then(() => res.status(201).json({ message: 'User created !' }))
-                        .catch(error => {
-                            res.status(400).json({ error: 'Echec de la création du user' + error })
-                            console.log('Failed to create user ' + error);
-                        })
-
-                } else {
-                    console.log('Error with j variable !');
-                    return res.status(400).json({ error: 'Email already in use !' });
-                }
-
-            }
-
-            console.log(j);
-
-        })
-        .catch(error => {
-            console.log(error);
-            res.status(400).json({ message: 'Users collection is empty !' });
-        })
 }
+
+//LOGIN
 
 exports.login = (req, res, next) => {
 
@@ -210,3 +117,119 @@ exports.login = (req, res, next) => {
             res.status(400).json({ message: 'No users found !', error })
         })
 }
+
+//GET USERS
+
+function signup(res, email, password) {
+
+    User.find()
+        .then(users => {
+
+            if (isUsersEmpty(users)) {
+
+                createUser(res, email, password)
+
+            } else {
+
+                isEmailAlreadyInUse()
+
+            }
+
+        })
+        .catch(error => {
+
+            console.log('Error with USERS Collection !' + error);
+            res.status(400).json({ error: 'Error with USERS Collection !', error })
+
+        })
+
+};
+
+//CHECK USERS LENGTH
+
+function isUsersEmpty(users) {
+
+    if (users.length == 0) {
+
+        return true;
+
+    } else {
+
+        return false;
+
+    }
+
+};
+
+//CREATE USER
+
+function createUser(res, email, password) {
+
+    const user = new User();
+
+    user.userId = user._id;
+
+    bcrypt.hash(email, 8)
+        .then(hash => {
+            user.email = hash;
+
+            bcrypt.hash(password, 8)
+                .then(hash => {
+                    user.password = hash;
+                })
+                .catch(error => {
+                    console.log('Erreur lors du hash !' + error);
+                    res.status(400).json({ message: 'Erreur lors du hash !', error });
+                })
+
+        })
+        .catch(error => {
+            console.log('Erreur lors du hash !' + error);
+            res.status(400).json({ message: 'Erreur lors du hash !', error });
+        })
+
+    user.save()
+        .then(() => res.status(201).json({ message: 'User created !' }))
+        .catch(error => {
+            res.status(400).json({ error: 'Echec de la création du user' + error })
+            console.log('Failed to create user ' + error);
+        })
+
+};
+
+//IS EMAIL ALREADY IN USE
+
+function isEmailAlreadyInUse(users, email) {
+
+    let j = 0;
+
+    for (i in users) {
+
+        const emailInDb = users[i].email;
+
+        bcrypt.compare(email, emailInDb)
+            .then((valid) => {
+
+                if (valid) {
+
+                    j = 1;
+
+                }
+
+                if (j == 1) {
+
+                    return true;
+
+                }
+
+                if (i == users.length - 1 && j == 0) {
+
+                    return false;
+
+                }
+
+            })
+
+    }
+
+};
