@@ -36,229 +36,73 @@ exports.login = (req, res, next) => {
     
 }
 
-//SIGN UP
+//SIGN UP FUNCTION
 
 function signup(res, email, password) {
-
-    User.find()
-        .then(users => {
-
-            if (isUsersEmpty(users)) {
-
-                createUser(res, email, password);
-
-            } else {
-
-                if (isEmailAlreadyInUse(users, email)) {
-
-                    console.log('Email already in use !');
-                    return res.status(400).json({ error: 'Email already in use !' });
-
-                } else {
-
-                    createUser(res, email, password);
-
-                }
-
-            }
-
-        })
-        .catch(error => {
-
-            console.log('Error with USERS Collection !' + error);
-            res.status(400).json({ error: 'Error with USERS Collection !', error })
-
-        })
-
-};
-
-//LOGIN
-
-function login(res, email, password){
-
-    User.find()
-    .then(users => {
-
-        if(isUsersEmpty(users)){
-
-            console.log('Users collection is empty !');
-            return res.status(400).json({error: 'Users collection is empty !'});
-
-        }else{
-
-            if(isEmailAlreadyInUse(users, email)){
-
-                if(isPasswordCorrect(users, email, password)){
-
-                    sendResponse(users, email, res);
-
-                }else{
-
-                    console.log('Wrong password !');
-                    return res.status(400).json({error: 'Wrong password !'});
-
-                }
-
-            }else{
-
-                console.log('No users with this email !');
-                return res.status(400).json({error: 'No users with this email !'});
-
-            }
-
-        }
-
-    })
-    .catch(error => {
-
-        console.log('Error with USERS Collection !' + error);
-        res.status(400).json({ error: 'Error with USERS Collection !', error })
-
-    })
-
-};
-
-//IS USERS EMPTY
-
-function isUsersEmpty(users) {
-
-    if (users.length == 0) {
-
-        return true;
-
-    } else {
-
-        return false;
-
-    }
-
-};
-
-//CREATE USER
-
-function createUser(res, email, password) {
 
     const user = new User();
 
     user.userId = user._id;
 
-    bcrypt.hash(email, 8)
-        .then(hash => {
-            user.email = hash;
+    user.email = email;
 
-            bcrypt.hash(password, 8)
-                .then(hash => {
-                    user.password = hash;
+    bcrypt.hash(password, 8)
+    .then(hash => {
 
-                    user.save()
-                        .then(() => res.status(201).json({ message: 'User created !' }))
-                        .catch(error => {
-                            res.status(400).json({ error: 'Echec de la création du user' + error })
-                            console.log('Echec de la création du user' + error);
-                        })
+        user.password = hash;
 
-                })
-                .catch(error => {
-                    console.log('Erreur lors du hash !' + error);
-                    res.status(400).json({ message: 'Erreur lors du hash !', error });
-                })
+    })
+    .catch(error => {
 
-        })
-        .catch(error => {
-            console.log('Erreur lors du hash !' + error);
-            res.status(400).json({ message: 'Erreur lors du hash !', error });
-        })
-};
+        console.log('Error with Bcrypt hash !' + error);
+        res.status(400).json({error: 'Error with Bcrypt hash !', error});
 
-//IS EMAIL ALREADY IN USE
+    })
 
-function isEmailAlreadyInUse(users, email) {
+    user.save()
+    .then(() => {
 
-    let j = 0;
+        console.log('User created !');
+        res.status(201).json({message: 'User created !'});
 
-    for (i in users) {
+    })
+    .catch(error => {
 
-        const emailInDb = users[i].email;
+        console.log('Failed to create user !' + error);
+        res.status(400).json({error: 'Failed to create user !', error})
 
-        bcrypt.compare(email, emailInDb)
-            .then((valid) => {
-
-                if (valid) {
-
-                    j = 1;
-
-                }
-
-                if (j == 1) {
-
-                    return true;
-
-                }
-
-                if (i == users.length - 1 && j == 0) {
-
-                    return false;
-
-                }
-
-            })
-
-    }
+    })
 
 };
 
-//GET USER INDEX
+//LOGIN FUNCTION
 
-function getUserIndex(users, email, res) {
+function login(res, email, password){
 
-    let j = 0;
+    User.findOne({email: email})
+    .then(user => {
 
-    for(i in users){
+        const passwordInDb = user.password;
 
-        const emailInDb = users[i].email;
-
-        bcrypt.compare(email, emailInDb)
+        bcrypt.compare(password, passwordInDb)
         .then(valid => {
 
-            if(valid){
+            if(!valid){
 
-                j = i;
+                console.log('Wrong password !');
+                res.status(401).json({error: 'Wrong password !'});
 
-                return j;
             }
 
-        })
-        .catch(error => {
-
-            console.log('Error with Bcrypt compare !' + error);
-            return res.status(400).json({error: 'Error with Bcrypt compare !', error});
+            sendResponse(user, res);
 
         })
 
-    }
+    })
+    .catch(error => {
 
-};
-
-//IS PASSWORD CORRECT
-
-function isPasswordCorrect(users, email, password, res){
-
-    const i = getUserIndex(users, email, res);
-
-    const passwordInDb = users[i].password;
-
-    bcrypt.compare(password, passwordInDb)
-    .then(valid => {
-
-        if(valid){
-
-            return true;    
-
-        }else{
-
-            return false;
-
-        }
+        console.log('User not found !' + error);
+        res.status(400).json({error: 'User not found !', error});
 
     })
 
@@ -266,11 +110,9 @@ function isPasswordCorrect(users, email, password, res){
 
 //SEND RESPONSE
 
-function sendResponse(users, email, res){
+function sendResponse(user, res){
 
-    const i = getUserIndex(users, email, res);
-
-    const userId = users[i]._id;
+    const userId = user._id;
 
     return res.status(200).json({
 
