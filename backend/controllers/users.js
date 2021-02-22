@@ -29,96 +29,14 @@ exports.login = (req, res, next) => {
 
     const password = req.body.password;
 
-    let currentUserId = '';
-
-    let j = 0;
-
     sanitized(email);
     sanitized(password);
 
-    User.find()
-        .then(users => {
-
-            if (users.length == 0) {
-                console.log('No users found !');
-            }
-
-            for (i in users) {
-
-                const emailInDb = users[i].email;
-
-                const userId = users[i].userId;
-
-                bcrypt.compare(email, emailInDb)
-                    .then(valid => {
-                        if (!valid) {
-
-                            console.log('Searching emails !');
-
-                            if (i == users.length - 1) {
-                                console.log('All email checked !');
-                            }
-
-                        } else if (valid) {
-
-                            if (i == users.length - 1) {
-                                console.log('All email checked !');
-                            }
-
-                            j++;
-
-                            currentUserId = userId;
-
-                        }
-
-                        //here
-
-                        if (j == 1) {
-
-                            User.findOne({ _id: currentUserId })
-                                .then(user => {
-                                    if (!user) {
-                                        console.log('User not found ! Error with User collection !');
-                                        return res.status(400).json({ error: 'User not found !' });
-                                    }
-
-                                    console.log('User found !');
-
-                                    bcrypt.compare(password, user.password)
-                                        .then(valid => {
-                                            if (!valid) {
-                                                console.log('Wrong password !');
-                                                return res.status(401).json({ error: 'Wrong password !' })
-                                            }
-                                            res.status(200).json({
-                                                userId: user.userId,
-                                                token: jwt.sign({ userId: user._id }, 'RANDOM_TOKEN_SECRET', { expiresIn: '24h' })
-                                            })
-                                        })
-                                        .catch(error => res.status(400).json({ message: 'Wrong password !', error }))
-                                })
-                                .catch(error => {
-                                    console.log('Cant find User !' + error);
-                                    res.status(400).json({ message: 'User not found !', error })
-                                });
-
-                        } else {
-                            console.log('Error with j variable !');
-                            return res.status(400).json({ error: 'Error with j variable !' });
-                        }
-
-                        console.log(j);
-
-                    })
-            }
-        })
-        .catch(error => {
-            console.log('No users found !' + error);
-            res.status(400).json({ message: 'No users found !', error })
-        })
+    login(res, email, password);
+    
 }
 
-//GET USERS
+//SIGN UP
 
 function signup(res, email, password) {
 
@@ -127,11 +45,20 @@ function signup(res, email, password) {
 
             if (isUsersEmpty(users)) {
 
-                createUser(res, email, password)
+                createUser(res, email, password);
 
             } else {
 
-                isEmailAlreadyInUse()
+                if (isEmailAlreadyInUse(users, email)) {
+
+                    console.log('Email already in use !');
+                    return res.status(400).json({ error: 'Email already in use !' });
+
+                } else {
+
+                    createUser(res, email, password);
+
+                }
 
             }
 
@@ -145,7 +72,39 @@ function signup(res, email, password) {
 
 };
 
-//CHECK USERS LENGTH
+//LOGIN
+
+function login(res, email, password){
+
+    User.find()
+    .then(users => {
+
+        if(isUsersEmpty(users)){
+
+            console.log('Users collection is empty !');
+            return res.status(400).json({error: 'Users collection is empty !'});
+
+        }else{
+
+            if(isEmailAlreadyInUse(users, email)){
+
+                
+
+            }
+
+        }
+
+    })
+    .catch(error => {
+
+        console.log('Error with USERS Collection !' + error);
+        res.status(400).json({ error: 'Error with USERS Collection !', error })
+
+    })
+
+};
+
+//IS USERS EMPTY
 
 function isUsersEmpty(users) {
 
@@ -176,6 +135,14 @@ function createUser(res, email, password) {
             bcrypt.hash(password, 8)
                 .then(hash => {
                     user.password = hash;
+
+                    user.save()
+                        .then(() => res.status(201).json({ message: 'User created !' }))
+                        .catch(error => {
+                            res.status(400).json({ error: 'Echec de la création du user' + error })
+                            console.log('Echec de la création du user' + error);
+                        })
+
                 })
                 .catch(error => {
                     console.log('Erreur lors du hash !' + error);
@@ -187,14 +154,6 @@ function createUser(res, email, password) {
             console.log('Erreur lors du hash !' + error);
             res.status(400).json({ message: 'Erreur lors du hash !', error });
         })
-
-    user.save()
-        .then(() => res.status(201).json({ message: 'User created !' }))
-        .catch(error => {
-            res.status(400).json({ error: 'Echec de la création du user' + error })
-            console.log('Failed to create user ' + error);
-        })
-
 };
 
 //IS EMAIL ALREADY IN USE
