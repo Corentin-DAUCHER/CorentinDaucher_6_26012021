@@ -88,7 +88,21 @@ function login(res, email, password){
 
             if(isEmailAlreadyInUse(users, email)){
 
-                
+                if(isPasswordCorrect(users, email, password)){
+
+                    sendResponse(users, email, res);
+
+                }else{
+
+                    console.log('Wrong password !');
+                    return res.status(400).json({error: 'Wrong password !'});
+
+                }
+
+            }else{
+
+                console.log('No users with this email !');
+                return res.status(400).json({error: 'No users with this email !'});
 
             }
 
@@ -190,5 +204,84 @@ function isEmailAlreadyInUse(users, email) {
             })
 
     }
+
+};
+
+//GET USER INDEX
+
+function getUserIndex(users, email, res) {
+
+    let j = 0;
+
+    for(i in users){
+
+        const emailInDb = users[i].email;
+
+        bcrypt.compare(email, emailInDb)
+        .then(valid => {
+
+            if(valid){
+
+                j = i;
+                break;
+            }
+
+        })
+        .catch(error => {
+
+            console.log('Error with Bcrypt compare !' + error);
+            return res.status(400).json({error: 'Error with Bcrypt compare !', error});
+
+        })
+
+    }
+
+    return j;
+
+};
+
+//IS PASSWORD CORRECT
+
+function isPasswordCorrect(users, email, password, res){
+
+    const i = getUserIndex(users, email, res);
+
+    const passwordInDb = users[i].password;
+
+    bcrypt.compare(password, passwordInDb)
+    .then(valid => {
+
+        if(valid){
+
+            return true;    
+
+        }else{
+
+            return false;
+
+        }
+
+    })
+
+};
+
+//SEND RESPONSE
+
+function sendResponse(users, email, res){
+
+    const i = getUserIndex(users, email, res);
+
+    const userId = users[i]._id;
+
+    return res.status(200).json({
+
+        userId: userId,
+        token: jwt.sign(
+            {userId: userId},
+            'RANDOM_TOKEN_SECRET',
+            {expiresIn: '24h'}
+        )
+
+    })
 
 };
