@@ -223,7 +223,8 @@ function getUserIndex(users, email, res) {
             if(valid){
 
                 j = i;
-                break;
+
+                return j;
             }
 
         })
@@ -235,8 +236,6 @@ function getUserIndex(users, email, res) {
         })
 
     }
-
-    return j;
 
 };
 
