@@ -94,6 +94,8 @@ function login(res, email, password){
 
             }
 
+            console.log('Connected as ' + user.email);
+
             sendResponse(user, res);
 
         })
