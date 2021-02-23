@@ -1,3 +1,5 @@
+//Import du user et password pour MongoDB
+
 const userPassword = require('./userPassword');
 
 const user = userPassword;
@@ -5,30 +7,52 @@ const user = userPassword;
 const name = user.name;
 const password = user.password;
 
+//Import du module express
+
 const express = require('express');
+
+//Import du module body-parser
 
 const bodyParser = require('body-parser');
 
+//Import du module helmet
+
 const helmet = require('helmet');
 
+//Import du module mongoose
+
 const mongoose = require('mongoose');
+
+//Import des routes
 
 const usersRoutes = require('./routes/users');
 
 const saucesRoutes = require('./routes/sauces');
 
+//Initialisation de express
+
 const app = express();
+
+//Import du module path
 
 const path = require('path');
 
+//Import du module express-rate-limit
+
 const rateLimit = require('express-rate-limit');
+
+//Initialisation de rate limit
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50
 });
 
+//Initialisation de l'URIS pour la connexion à MongoDB
+
 const URIS = 'mongodb+srv://' + name + ':' + password + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
+
+//Connexion à MongoDB
 
 mongoose.connect(URIS, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false })
     .then(() => {
@@ -39,12 +63,16 @@ mongoose.connect(URIS, { useNewUrlParser: true, useUnifiedTopology: true, useCre
     console.error(error);
 });
 
+//Initialisation des headers
+
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
 });
+
+
 
 app.use(helmet());
 
@@ -57,5 +85,7 @@ app.use('/api/auth', usersRoutes);
 app.use('/api/sauces', saucesRoutes);
 
 app.use('/images', express.static(path.join(__dirname, 'images')));
+
+//Export du module app
 
 module.exports = app;
