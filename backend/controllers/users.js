@@ -14,6 +14,14 @@ const bcrypt = require('bcrypt');
 
 const sanitized = require('sanitized');
 
+//Import du module email-validator
+
+const emailValidator = require('email-validator');
+
+//Import du module check-password-strength
+
+const checkPassword = require('check-password-strength');
+
 //SIGNUP
 
 exports.signup = (req, res, next) => {
@@ -22,7 +30,29 @@ exports.signup = (req, res, next) => {
 
     const email = req.body.email.toLowerCase();
 
+    //Validation de l'email, si invalid retourne une erreur
+
+    if(!emailValidator(email)){
+
+        console.log('Email is not valid !');
+        return res.status(400).json({error: 'Email is not valid !'});
+
+    };
+
     const password = req.body.password;
+
+    //Récupération de value renvoyé par checkPassword
+
+    const passwordStrength = checkPassword(password).value;
+
+    //Si passwordStrength différent de Strong renvoie une erreur
+
+    if(passwordStrength =! 'Strong'){
+
+        console.log('Password is too weak !');
+        res.status(400).json({error: 'Password is too weak !'});
+
+    };
 
     //sanitize des données
 
