@@ -30,9 +30,13 @@ exports.signup = (req, res, next) => {
 
     const email = req.body.email.toLowerCase();
 
+    //sanitize de l'email
+
+    sanitized(email);
+
     //Validation de l'email, si invalid retourne une erreur
 
-    if(!emailValidator(email)){
+    if(!emailValidator.validate(email)){
 
         console.log('Email is not valid !');
         return res.status(400).json({error: 'Email is not valid !'});
@@ -41,23 +45,22 @@ exports.signup = (req, res, next) => {
 
     const password = req.body.password;
 
+    //sanitize du password
+
+    sanitized(password);
+
     //Récupération de value renvoyé par checkPassword
 
     const passwordStrength = checkPassword(password).value;
 
     //Si passwordStrength différent de Strong renvoie une erreur
 
-    if(passwordStrength =! 'Strong'){
+    if(passwordStrength != 'Strong'){
 
         console.log('Password is too weak !');
-        res.status(400).json({error: 'Password is too weak !'});
+        return res.status(400).json({error: 'Password is too weak !'});
 
     };
-
-    //sanitize des données
-
-    sanitized(email);
-    sanitized(password);
 
     //Appel de la fonction signup
 
