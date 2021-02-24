@@ -1,10 +1,14 @@
 //Import du user et password pour MongoDB
 
+//Initialisation du module dotenv
+
 const dotenv = require('dotenv').config();
 
 if (dotenv.error) {
   throw dotenv.error
 }
+
+//Initialisation des variables
 
 const userName = process.env.userName;
 
