@@ -1,11 +1,14 @@
 //Import du user et password pour MongoDB
 
-const userPassword = require('./userPassword');
+const dotenv = require('dotenv').config();
 
-const user = userPassword;
+if (dotenv.error) {
+  throw dotenv.error
+}
 
-const name = user.name;
-const password = user.password;
+const userName = process.env.userName;
+
+const userPassword = process.env.userPassword;
 
 //Import du module express
 
@@ -50,7 +53,7 @@ const limiter = rateLimit({
 
 //Initialisation de l'URIS pour la connexion à MongoDB
 
-const URIS = 'mongodb+srv://' + name + ':' + password + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
+const URIS = 'mongodb+srv://' + userName + ':' + userPassword + '@cluster-0.lvh0y.mongodb.net/P6_DataBase?retryWrites=true&w=majority';
 
 //Connexion à MongoDB
 
